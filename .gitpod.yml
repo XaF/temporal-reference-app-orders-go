@@ -87,7 +87,7 @@ tasks:
   command: |
     reflex -r '\.go$' -s -v -- sh -c "go run ./cmd/oms api" | \
       tee "/tmp/logs/oms-api.log"
-  openMode: split-right
+  openMode: tab-after
 - name: Web UI
   env:
     BILLING_API_URL: http://localhost:10001
