@@ -81,8 +81,12 @@ tasks:
     set -euo pipefail
     # Install reflex to keep track of go file changes
     go install github.com/cespare/reflex@latest
+    # Install the dependencies
+    go mod download
     # Make sure the logs directory exists
     mkdir -p /tmp/logs
+    # Indicate oms is ready
+    gp sync-done oms-init
   command: |
     reflex -r '\.go$' -s -- sh -c "go run ./cmd/oms worker" | \
       tee "/tmp/logs/oms-worker.log"
@@ -94,10 +98,8 @@ tasks:
     FRAUD_API_PORT: 10004
   init: |
     set -euo pipefail
-    # Install reflex to keep track of go file changes
-    go install github.com/cespare/reflex@latest
-    # Make sure the logs directory exists
-    mkdir -p /tmp/logs
+    # Wait for oms to be ready
+    gp sync-wait oms-init
   command: |
     reflex -r '\.go$' -s -- sh -c "go run ./cmd/oms api" | \
       tee "/tmp/logs/oms-api.log"
