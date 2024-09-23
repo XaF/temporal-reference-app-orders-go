@@ -75,6 +75,7 @@ tasks:
       gp preview $(gp url 8080)/
     # Now wait on the temporal server process
     wait
+  openMode: split-left
 - name: Web UI
   env:
     BILLING_API_URL: http://localhost:10001
