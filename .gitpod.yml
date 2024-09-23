@@ -75,19 +75,6 @@ tasks:
       gp preview $(gp url 8080)/
     # Now wait on the temporal server process
     wait
-- name: Worker
-  init: |
-    # Install reflex to keep track of go file changes
-    go install github.com/cespare/reflex@latest
-    # Install the dependencies
-    go mod download
-    # Make sure the logs directory exists
-    mkdir -p /tmp/logs
-    # Indicate oms is ready
-    gp sync-done oms-init
-  command: |
-    reflex -r '\.go$' -s -- sh -c "go run ./cmd/oms worker" | \
-      tee "/tmp/logs/oms-worker.log"
 - name: API Servers
   env:
     BILLING_API_PORT: 10001
@@ -98,9 +85,9 @@ tasks:
     # Wait for oms to be ready
     gp sync-await oms-init
   command: |
-    reflex -r '\.go$' -s -- sh -c "go run ./cmd/oms api" | \
+    reflex -r '\.go$' -s -v -- sh -c "go run ./cmd/oms api" | \
       tee "/tmp/logs/oms-api.log"
-  openMode: tab-after
+  openMode: split-right
 - name: Web UI
   env:
     BILLING_API_URL: http://localhost:10001
@@ -126,6 +113,24 @@ tasks:
     # Now wait on the oms web server process
     wait
   openMode: tab-after
-# - name: Terminal
-  # init: ./.devcontainer/welcome.sh | less -R
-  # openMode: split-right
+- name: Worker
+  env:
+    BILLING_API_URL: http://localhost:10001
+    ORDER_API_URL: http://localhost:10002
+    SHIPMENT_API_URL: http://localhost:10003
+    FRAUD_API_URL: http://localhost:10004
+  init: |
+    # Install reflex to keep track of go file changes
+    go install github.com/cespare/reflex@latest
+    # Install the dependencies
+    go mod download
+    # Make sure the logs directory exists
+    mkdir -p /tmp/logs
+    # Indicate oms is ready
+    gp sync-done oms-init
+  command: |
+    reflex -r '\.go$' -s -v -- sh -c "go run ./cmd/oms worker" | \
+      tee "/tmp/logs/oms-worker.log"
+  openMode: tab-after
+- name: Terminal
+  openMode: split-right
