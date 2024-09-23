@@ -78,7 +78,7 @@ tasks:
     # Wait for the go to open stuff
     gp sync-await all-systems-go
     # Open the UI
-    gp preview "$(gp url $TEMPORAL_UI_PORT)"
+    # gp preview "$(gp url $TEMPORAL_UI_PORT)"
     # Now wait on the temporal server process
     wait
   openMode: split-left
@@ -165,5 +165,6 @@ tasks:
     # We are ready to go
     gp sync-done all-systems-go
     # Print a welcome message
+    clear
     echo "Welcome to the sandbox!"
   openMode: split-right
