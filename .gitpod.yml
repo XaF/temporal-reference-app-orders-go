@@ -118,7 +118,7 @@ tasks:
     # Open the UI, we do that externally because we can't open two
     # UIs; but ideally we would replace that by a VSCode extension
     # with nice buttons to switch between the two UIs
-    # gp preview "$(gp url 5173)" --external
+    gp preview "$(gp url 5173)" --external
     # Now wait on the oms web server process
     wait
   openMode: tab-after
