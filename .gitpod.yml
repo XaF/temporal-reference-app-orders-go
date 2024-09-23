@@ -114,7 +114,7 @@ tasks:
     git clone --depth 1 https://github.com/temporalio/reference-app-orders-web.git /tmp/oms-web
     # Install the web application dependencies
     cd /tmp/oms-web
-    pnpm install
+    # pnpm install
     # Make sure the logs directory exists
     mkdir -p /tmp/logs
   command: |
