@@ -145,22 +145,22 @@ tasks:
   init: |
     # Install modd to keep track of go file changes
     go install github.com/cortesi/modd/cmd/modd@latest
-    # Install the dependencies
-    go mod download
+    # Build the binary
+    go build ./cmd/oms
     # Make sure the logs directory exists
     mkdir -p /tmp/logs
     # Create the modd.conf file
     cat <<EOF > modd.conf
     **/*.go !**/*_test.go {
-      daemon +sigterm: go run ./cmd/oms worker
+      prep: go build ./cmd/oms
+      daemon +sigterm: ./oms worker | tee -a /tmp/logs/oms-worker.log
     }
     **/*.go !**/*_test.go {
-      daemon +sigterm: go run ./cmd/oms api
+      prep: go build ./cmd/oms
+      daemon +sigterm: ./oms api | tee -a /tmp/logs/oms-api.log
     }
     EOF
-  command: |
-    modd | \
-      tee "/tmp/logs/oms-backend.log"
+  command: modd
   openMode: tab-after
-- name: Terminal
-  openMode: split-right
+# - name: Terminal
+  # openMode: split-right
