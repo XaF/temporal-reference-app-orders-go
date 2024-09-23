@@ -100,39 +100,7 @@ tasks:
     # Now wait on the oms web server process
     wait
   openMode: tab-after
-# - name: API Servers
-  # env:
-    # BILLING_API_PORT: 10001
-    # ORDER_API_PORT: 10002
-    # SHIPMENT_API_PORT: 10003
-    # FRAUD_API_PORT: 10004
-  # init: |
-    # # Wait for oms to be ready
-    # gp sync-await oms-init
-  # command: |
-    # reflex -r '\.go$' -s -v -- sh -c "go run ./cmd/oms api" | \
-      # tee "/tmp/logs/oms-api.log"
-  # openMode: tab-after
-# - name: Worker
-  # env:
-    # BILLING_API_URL: http://localhost:10001
-    # ORDER_API_URL: http://localhost:10002
-    # SHIPMENT_API_URL: http://localhost:10003
-    # FRAUD_API_URL: http://localhost:10004
-  # init: |
-    # # Install reflex to keep track of go file changes
-    # go install github.com/cespare/reflex@latest
-    # # Install the dependencies
-    # go mod download
-    # # Make sure the logs directory exists
-    # mkdir -p /tmp/logs
-    # # Indicate oms is ready
-    # gp sync-done oms-init
-  # command: |
-    # reflex -r '\.go$' -s -v -- sh -c "go run ./cmd/oms worker" | \
-      # tee "/tmp/logs/oms-worker.log"
-  # openMode: tab-after
-- name: Worker
+- name: OMS Backend
   env:
     BILLING_API_PORT: 10001
     ORDER_API_PORT: 10002
@@ -150,7 +118,7 @@ tasks:
     # Make sure the logs directory exists
     mkdir -p /tmp/logs
     # Create the modd.conf file
-    cat <<EOF > modd.conf
+    cat <<EOF > /tmp/oms-modd.conf
     **/*.go !**/*_test.go {
       prep: go build ./cmd/oms
       daemon +sigterm: ./oms worker | tee -a /tmp/logs/oms-worker.log
@@ -160,7 +128,8 @@ tasks:
       daemon +sigterm: ./oms api | tee -a /tmp/logs/oms-api.log
     }
     EOF
-  command: modd
+  command: modd -f /tmp/oms-modd.conf
   openMode: tab-after
-# - name: Terminal
-  # openMode: split-right
+- name: Terminal
+  init: echo "Welcome to the sandbox!"
+  openMode: split-right
