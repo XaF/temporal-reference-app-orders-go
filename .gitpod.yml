@@ -113,21 +113,22 @@ tasks:
     # Clone the web application repository
     git clone --depth 1 https://github.com/temporalio/reference-app-orders-web.git /tmp/oms-web
     # Install the web application dependencies
-    cd /tmp/oms-web
-    pnpm install
+    # cd /tmp/oms-web
+    # pnpm install
     # Make sure the logs directory exists
     mkdir -p /tmp/logs
   command: |
+    echo HELLO
     # Trigger start of the oms web server, and send it to the background
-    cd /tmp/oms-web && \
-      pnpm dev |
-      tee "/tmp/logs/oms-web.log" \
-      &
-    # Wait for the web UI port to be open and open the preview
-    gp ports await 5173 && \
-      gp preview $(gp url 5173)/
-    # Now wait on the oms web server process
-    wait
+    # cd /tmp/oms-web && \
+      # pnpm dev |
+      # tee "/tmp/logs/oms-web.log" \
+      # &
+    # # Wait for the web UI port to be open and open the preview
+    # gp ports await 5173 && \
+      # gp preview $(gp url 5173)/
+    # # Now wait on the oms web server process
+    # wait
   # openMode: tab-after
 # - name: Terminal
   # init: ./.devcontainer/welcome.sh | less -R
