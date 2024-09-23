@@ -109,7 +109,7 @@ tasks:
     SHIPMENT_API_PORT: 10003
     FRAUD_API_PORT: 10004
   init: |
-    set -euo pipefail
+    set -eo pipefail
     # Clone the web application repository
     git clone --depth 1 https://github.com/temporalio/reference-app-orders-web.git /tmp/oms-web
     # Install the web application dependencies
