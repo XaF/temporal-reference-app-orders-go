@@ -118,7 +118,7 @@ tasks:
     mkdir -p /tmp/logs
   command: |
     # Trigger start of the oms web server, and send it to the background
-    pnpm dev --prefix /tmp/oms-web | \
+    (cd /tmp/oms-web && pnpm dev) | \
       tee "/tmp/logs/oms-web.log" \
       &
     # Wait for the web UI port to be open and open the preview
