@@ -43,6 +43,7 @@ tasks:
 - name: Server
   env:
     TEMPORAL_CLI_VERSION: 1.0.0
+    TEMPORAL_UI_PORT: 8080
   init: |
     # Prepare the variables used to download the Temporal CLI
     PLATFORM=linux
@@ -66,18 +67,22 @@ tasks:
       --ip 0.0.0.0 \
       --port 7233 \
       --http-port 7243 \
-      --ui-port 8080 \
+      --ui-port "$TEMPORAL_UI_PORT" \
       --db-filename temporal-persistence.db \
       | tee "/tmp/logs/temporal-server.log" \
       &
     # Wait for the web UI port to be open and open the preview
-    gp ports await 8080 && \
-      gp preview $(gp url 8080)/
+    gp ports await "$TEMPORAL_UI_PORT" && \
+      gp preview $(gp url "$TEMPORAL_UI_PORT")/
     # Now wait on the temporal server process
     wait
   openMode: split-left
 - name: Web UI
   env:
+    BILLING_API_PORT: 10001
+    ORDER_API_PORT: 10002
+    SHIPMENT_API_PORT: 10003
+    FRAUD_API_PORT: 10004
     BILLING_API_URL: http://localhost:10001
     ORDER_API_URL: http://localhost:10002
     SHIPMENT_API_URL: http://localhost:10003
@@ -97,6 +102,10 @@ tasks:
       &
     # Wait for the web UI port to be open and open the preview
     gp ports await 5173 && \
+      gp ports await "$BILLING_API_PORT" && \
+      gp ports await "$ORDER_API_PORT" && \
+      gp ports await "$SHIPMENT_API_PORT" && \
+      gp ports await "$FRAUD_API_PORT" && \
       gp preview $(gp url 5173)/
     # Now wait on the oms web server process
     wait
@@ -132,5 +141,9 @@ tasks:
   command: modd -f /tmp/oms-modd.conf
   openMode: tab-after
 - name: Terminal
-  init: echo "Welcome to the sandbox!"
+  init: |
+    # Open the readme file
+    gp preview README.md
+    # Print a welcome message
+    echo "Welcome to the sandbox!"
   openMode: split-right
