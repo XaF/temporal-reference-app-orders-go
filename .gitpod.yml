@@ -40,7 +40,7 @@ ports:
   port: 10004
   onOpen: ignore  # do not notify once the port is detected
 tasks:
-- name: Server
+- name: Temporal Server
   env:
     TEMPORAL_CLI_VERSION: 1.0.0
     TEMPORAL_UI_PORT: 8080
@@ -72,12 +72,17 @@ tasks:
       | tee "/tmp/logs/temporal-server.log" \
       &
     # Wait for the web UI port to be open and open the preview
-    gp ports await "$TEMPORAL_UI_PORT" && \
-      gp preview $(gp url "$TEMPORAL_UI_PORT")/
+    gp ports await "$TEMPORAL_UI_PORT"
+    # Set the temporal-server as ready
+    gp sync-done temporal-server
+    # Wait for the go to open stuff
+    gp sync-await all-systems-go
+    # Open the UI
+    gp preview "$(gp url $TEMPORAL_UI_PORT)"
     # Now wait on the temporal server process
     wait
   openMode: split-left
-- name: Web UI
+- name: OMS Frontend
   env:
     BILLING_API_PORT: 10001
     ORDER_API_PORT: 10002
@@ -105,8 +110,15 @@ tasks:
       gp ports await "$BILLING_API_PORT" && \
       gp ports await "$ORDER_API_PORT" && \
       gp ports await "$SHIPMENT_API_PORT" && \
-      gp ports await "$FRAUD_API_PORT" && \
-      gp preview $(gp url 5173)/
+      gp ports await "$FRAUD_API_PORT"
+    # Set oms as ready
+    gp sync-done oms
+    # Wait for the go to open stuff
+    gp sync-await all-systems-go
+    # Open the UI, we do that externally because we can't open two
+    # UIs; but ideally we would replace that by a VSCode extension
+    # with nice buttons to switch between the two UIs
+    gp preview "$(gp url 5173)" --external
     # Now wait on the oms web server process
     wait
   openMode: tab-after
@@ -142,8 +154,16 @@ tasks:
   openMode: tab-after
 - name: Terminal
   init: |
-    # Open the readme file
-    gp preview README.md
+    # Open a loading URL for now
+    # TODO: replace by a page that shows "Loading Temporal Sandbox" with the loading Temporal logo
+    gp preview https://cdn.svgator.com/images/2023/06/geometric-shapes-preloaders.svg
+    # Wait for all resources to be ready
+    gp sync-await oms
+    gp sync-await temporal-server
+    # Open the readme file so the user can see the instructions
+    gp open README.md
+    # We are ready to go
+    gp sync-done all-systems-go
     # Print a welcome message
     echo "Welcome to the sandbox!"
   openMode: split-right
