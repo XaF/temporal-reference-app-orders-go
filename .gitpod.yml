@@ -134,6 +134,10 @@ tasks:
   # openMode: tab-after
 - name: Worker
   env:
+    BILLING_API_PORT: 10001
+    ORDER_API_PORT: 10002
+    SHIPMENT_API_PORT: 10003
+    FRAUD_API_PORT: 10004
     BILLING_API_URL: http://localhost:10001
     ORDER_API_URL: http://localhost:10002
     SHIPMENT_API_URL: http://localhost:10003
