@@ -1,0 +1,106 @@
+# See https://www.gitpod.io/docs/configure/workspaces/workspace-image
+#image:
+#  file: .devcontainer/Dockerfile.gitpod
+# See https://www.gitpod.io/docs/configure/workspaces/ports
+ports:
+- name: temporal-web-ui
+  description: The Web UI of Temporal
+  port: 8080
+  onOpen: ignore  # do not notify once the port is detected
+- name: temporal-grpc
+  description: The gRPC API of Temporal
+  port: 7233
+  onOpen: ignore  # do not notify once the port is detected
+- name: temporal-http
+  description: The HTTP API of Temporal
+  port: 7243
+  onOpen: ignore  # do not notify once the port is detected
+- name: temporal-metrics
+  description: The Prometheus endpoint to read Temporal metrics
+  port: 9090
+  onOpen: ignore  # do not notify once the port is detected
+- name: oms-web
+  description: The Web UI of the Order Management System
+  port: 5173
+  onOpen: ignore  # do not notify once the port is detected
+tasks:
+- name: Server
+  init: |
+    set -euo pipefail
+    # Prepare the variables used to download the Temporal CLI
+    TEMPORAL_CLI_VERSION=1.0.0
+    PLATFORM=linux
+    ARCHITECTURE=$(uname -m)
+    # Validate the architecture and set it to the supported values
+    case $ARCHITECTURE in \
+        x86_64 | amd64) ARCHITECTURE=amd64 ;; \
+        aarch64 | arm64) ARCHITECTURE=arm64 ;; \
+        *) echo "Unsupported architecture: $ARCHITECTURE" && exit 1 ;; \
+    esac
+    # Download and install the Temporal CLI
+    curl -L "https://github.com/temporalio/cli/releases/download/v${TEMPORAL_CLI_VERSION}/temporal_cli_${TEMPORAL_CLI_VERSION}_${PLATFORM}_${ARCHITECTURE}.tar.gz" | \
+      sudo tar -xz -C /usr/local/bin && \
+      sudo chmod +x /usr/local/bin/temporal
+    # Make sure the logs directory exists
+    mkdir -p /tmp/logs
+  command: |
+    # Trigger start of temporal server, and send it to the background
+    temporal server start-dev \
+      --metrics-port 9090 \
+      --ip 0.0.0.0 \
+      --port 7233 \
+      --http-port 7243 \
+      --ui-port 8080 \
+      --db-filename temporal-persistence.db \
+      | tee "/tmp/logs/temporal-server.log" \
+      &
+    # Wait for the web UI port to be open and open the preview
+    gp ports await 8080 && \
+      gp preview $(gp url 8080)/
+    # Now wait on the temporal server process
+    wait
+- name: Worker
+  init: |
+    set -euo pipefail
+    # Install reflex to keep track of go file changes
+    go install github.com/cespare/reflex@latest
+    # Make sure the logs directory exists
+    mkdir -p /tmp/logs
+  command: |
+    reflex -r '\.go$' -s -- sh -c "go run ./cmd/oms worker" | \
+      tee "/tmp/logs/oms-worker.log"
+- name: API Servers
+  init: |
+    set -euo pipefail
+    # Install reflex to keep track of go file changes
+    go install github.com/cespare/reflex@latest
+    # Make sure the logs directory exists
+    mkdir -p /tmp/logs
+  command: |
+    reflex -r '\.go$' -s -- sh -c "go run ./cmd/oms api" | \
+      tee "/tmp/logs/oms-api.log"
+  openMode: tab-after
+- name: Web UI
+  init: |
+    set -euo pipefail
+    # Clone the web application repository
+    git clone --depth 1 https://github.com/temporalio/reference-app-orders-web.git /tmp/oms-web
+    # Install the web application dependencies
+    (cd /tmp/oms-web && pnpm install)
+    # Make sure the logs directory exists
+    mkdir -p /tmp/logs
+  command: |
+    # Trigger start of the oms web server, and send it to the background
+    cd /tmp/oms-web && \
+      pnpm dev |
+      tee "/tmp/logs/oms-web.log" \
+      &
+    # Wait for the web UI port to be open and open the preview
+    gp ports await 5173 && \
+      gp preview $(gp url 5173)/
+    # Now wait on the oms web server process
+    wait
+  openMode: tab-after
+# - name: Terminal
+  # init: ./.devcontainer/welcome.sh | less -R
+  # openMode: split-right
